@@ -51,6 +51,12 @@ public:
 
 	void OnSuicide();
 
+	void Equip();
+
+	void UnEquip();
+
+	bool bIsEquipped;
+
 
 	/**Health of my character*/
 	UPROPERTY(ReplicatedUsing = OnRep_Health)

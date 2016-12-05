@@ -16,9 +16,15 @@ AWeapon::AWeapon()
 	WeaponMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	WeaponMesh->bReceivesDecals = false;
 	WeaponMesh->CastShadow = true;
-	WeaponMesh->SetCollisionObjectType(ECC_WorldDynamic);
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetCollisionProfileName(FName(TEXT("PhysicsActor")));
 	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	WeaponMesh->bEnablePhysicsOnDedicatedServer = true;
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	WeaponMesh->SetupAttachment(RootComponent);
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -84,9 +90,25 @@ void AWeapon::ProcessInstantHit(const FHitResult &Impact, const FVector &Origin,
 	const FVector EndPoint = Impact.GetActor() ? Impact.ImpactPoint : EndTrace;
 	DrawDebugLine(this->GetWorld(), Origin, Impact.TraceEnd, FColor::Red, true, 10000, 10.0f);
 	const FRotator AimDir = WeaponMesh->GetSocketRotation("MF");
-	UGameplayStatics::SpawnDecalAtLocation(this->GetWorld(), NULL, FVector(20.f,20.f,20.f), EndTrace, AimDir, 20.f);
 
 	if (FireShoot != NULL) {
 		UGameplayStatics::PlaySoundAtLocation(this, FireShoot, GetActorLocation());
 	}
+	if (MuzzleFlash != NULL) {
+		UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, WeaponMesh, ("MF"));
+	}
+	if (SmokeChamber != NULL) {
+		UGameplayStatics::SpawnEmitterAttached(SmokeChamber, WeaponMesh, ("MF"));
+	}
+	if (BulletHole != NULL) {
+		UGameplayStatics::SpawnDecalAtLocation(this, BulletHole, FVector(5.f, 5.f, 5.f),Impact.ImpactPoint, AimDir, 20.f);
+	}
+	if (ImpactParticle != NULL) {
+		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactParticle, Impact.ImpactPoint, GetActorRotation());
+	}
+
+}
+
+void AWeapon::UpdateWeaponPhysics() {
+
 }

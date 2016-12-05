@@ -80,6 +80,8 @@ void AMTACharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	InputComponent->BindAction("Fire", IE_Pressed, this, &AMTACharacter::FireWeapon);
+	InputComponent->BindAction("UnEquip", IE_Pressed, this, &AMTACharacter::UnEquip);
+	InputComponent->BindAction("Equip", IE_Pressed, this, &AMTACharacter::Equip);
 
 	InputComponent->BindAxis("MoveForward", this, &AMTACharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AMTACharacter::MoveRight);
@@ -105,6 +107,7 @@ void AMTACharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bIsEquipped = true;
 
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
@@ -223,7 +226,11 @@ void AMTACharacter::OnRep_Health()
 
 void AMTACharacter::FireWeapon() {
 
-	CurrentWeapon->Fire();
+	if (bIsEquipped) {
+		CurrentWeapon->Fire();
+	}else{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Cannot Fire Without a Weapon!"));
+	}
 }
 
 void AMTACharacter::LifeSpanExpired() 
@@ -236,4 +243,28 @@ void AMTACharacter::LifeSpanExpired()
 	{
 		GetWorld()->GetAuthGameMode()->RestartPlayer(playerController);
 	}
+}
+
+void AMTACharacter::Equip() {
+
+	if (!bIsEquipped){
+		CurrentWeapon->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
+		bIsEquipped = true;
+	}
+	else {
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Already Have A Weapon!"));
+	}
+
+}
+
+void AMTACharacter::UnEquip() {
+
+	if (bIsEquipped) {
+		CurrentWeapon->DetachRootComponentFromParent();
+		bIsEquipped = false;
+	}
+	else {
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Dont Have A Weapon!"));
+	}
+
 }

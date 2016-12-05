@@ -77,8 +77,21 @@ protected:
 	void ProcessInstantHit(const FHitResult &Impact, const FVector &Origin, const FVector &ShootDir, int32 RandomSeed, float ReticleSpread);
 
 public:
+
+	void UpdateWeaponPhysics();
 	
 	UPROPERTY(EditDefaultsOnly, Category = Config)
 	class USoundBase* FireShoot;
 	
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* SmokeChamber;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* ImpactParticle;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UMaterialInterface* BulletHole;
 };
