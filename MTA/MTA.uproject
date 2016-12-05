@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{AD5DB4DB-4C30-818B-0633-0BBCD94A3614}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "MTA",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}
