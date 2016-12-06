@@ -2,6 +2,7 @@
 
 #include "MTA.h"
 #include "Weapon.h"
+#include "MTACharacter.h"
 #include "Engine.h"
 
 
@@ -23,8 +24,7 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	WeaponMesh->bEnablePhysicsOnDedicatedServer = true;
-	WeaponMesh->SetSimulatePhysics(true);
-	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetupAttachment(RootComponent);
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -111,4 +111,14 @@ void AWeapon::ProcessInstantHit(const FHitResult &Impact, const FVector &Origin,
 
 void AWeapon::UpdateWeaponPhysics() {
 
+/**	AMTACharacter * OldSoldier = Cast<AMTACharacter>(GetAttachParentActor());
+
+	bCanEquip = OldSoldier->bIsEquipped;
+
+	if (bCanEquip) {
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}else{
+		WeaponMesh->SetSimulatePhysics(true);
+	}*/
 }

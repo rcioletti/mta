@@ -94,4 +94,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Config)
 	class UMaterialInterface* BulletHole;
+
+	bool bCanEquip;
 };

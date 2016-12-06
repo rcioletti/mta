@@ -24,6 +24,16 @@ AMTACharacter::AMTACharacter()
 		WeaponSpawn = (UClass*)WeaponBlueprint.Object->GeneratedClass;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UAnimBlueprintGeneratedClass> AnimBlueprint(TEXT("AnimBlueprint'/Game/Mannequin/Animations/ThirdPerson_AnimBP.ThirdPerson_AnimBP'"));
+	GetMesh()->AnimBlueprintGeneratedClass = AnimBlueprint.Object;
+	GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
+	GetMesh()->RelativeRotation.Yaw = -90.f;
+	GetMesh()->RelativeLocation.Z = -90.f;
+	GetMesh()->SetCollisionProfileName(FName(TEXT("Ragdoll")));
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -80,6 +90,10 @@ void AMTACharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	InputComponent->BindAction("Fire", IE_Pressed, this, &AMTACharacter::FireWeapon);
+
+	InputComponent->BindAction("Aim", IE_Pressed, this, &AMTACharacter::StartAiming);
+	InputComponent->BindAction("Aim", IE_Released, this, &AMTACharacter::StopAiming);
+
 	InputComponent->BindAction("UnEquip", IE_Pressed, this, &AMTACharacter::UnEquip);
 	InputComponent->BindAction("Equip", IE_Pressed, this, &AMTACharacter::Equip);
 
@@ -108,6 +122,7 @@ void AMTACharacter::BeginPlay()
 	Super::BeginPlay();
 
 	bIsEquipped = true;
+
 
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
@@ -212,8 +227,8 @@ void AMTACharacter::OnRep_Health()
 	{
 		// Activate ragdoll if health <= 0
 		GetMesh()->SetAllBodiesSimulatePhysics(true);
-
-		LifeSpanExpired();
+		FTimerHandle UnusedHandle;
+		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AMTACharacter::LifeSpanExpired, 5.0f, true);
 	
 	}
 
@@ -248,8 +263,9 @@ void AMTACharacter::LifeSpanExpired()
 void AMTACharacter::Equip() {
 
 	if (!bIsEquipped){
-		CurrentWeapon->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
 		bIsEquipped = true;
+		CurrentWeapon->UpdateWeaponPhysics();
+		CurrentWeapon->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Already Have A Weapon!"));
@@ -262,9 +278,20 @@ void AMTACharacter::UnEquip() {
 	if (bIsEquipped) {
 		CurrentWeapon->DetachRootComponentFromParent();
 		bIsEquipped = false;
+		CurrentWeapon->UpdateWeaponPhysics();
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Dont Have A Weapon!"));
 	}
 
+}
+
+void AMTACharacter::StartAiming()
+{
+	bAiming = true;
+}
+
+void AMTACharacter::StopAiming()
+{
+	bAiming = false;
 }

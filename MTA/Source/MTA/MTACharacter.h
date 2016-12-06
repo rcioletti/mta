@@ -2,6 +2,7 @@
 #pragma once
 #include "GameFramework/Character.h"
 #include "Weapon.h"
+#include "InteractionInterface.h"
 #include "MTACharacter.generated.h"
 
 UENUM()
@@ -55,12 +56,23 @@ public:
 
 	void UnEquip();
 
+	void StartAiming();
+
+	void StopAiming();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
+	bool bAiming;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation")
 	bool bIsEquipped;
 
 
 	/**Health of my character*/
 	UPROPERTY(ReplicatedUsing = OnRep_Health)
 		float Health;
+
+	UPROPERTY(EditAnywhere, Category = Stats)
+		float MaxHealth = 100.f;
 
 	UFUNCTION()
 		void OnRep_Health();
