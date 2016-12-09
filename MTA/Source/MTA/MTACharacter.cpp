@@ -4,6 +4,7 @@
 #include "MTACharacter.h"
 #include "UnrealNetwork.h"
 #include "Engine.h"
+#include "MyPlayerController.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AMTACharacter
@@ -23,16 +24,6 @@ AMTACharacter::AMTACharacter()
 	{
 		WeaponSpawn = (UClass*)WeaponBlueprint.Object->GeneratedClass;
 	}
-
-	static ConstructorHelpers::FObjectFinder<UAnimBlueprintGeneratedClass> AnimBlueprint(TEXT("AnimBlueprint'/Game/Mannequin/Animations/ThirdPerson_AnimBP.ThirdPerson_AnimBP'"));
-	GetMesh()->AnimBlueprintGeneratedClass = AnimBlueprint.Object;
-	GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
-	GetMesh()->RelativeRotation.Yaw = -90.f;
-	GetMesh()->RelativeLocation.Z = -90.f;
-	GetMesh()->SetCollisionProfileName(FName(TEXT("Ragdoll")));
-	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -97,6 +88,8 @@ void AMTACharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("UnEquip", IE_Pressed, this, &AMTACharacter::UnEquip);
 	InputComponent->BindAction("Equip", IE_Pressed, this, &AMTACharacter::Equip);
 
+	InputComponent->BindAction("Inventory", IE_Pressed, this, &AMTACharacter::HandleInventoryInput);
+
 	InputComponent->BindAxis("MoveForward", this, &AMTACharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AMTACharacter::MoveRight);
 
@@ -121,7 +114,11 @@ void AMTACharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Inventory.SetNum(MAX_INVENTORY_ITEMS);
+
 	bIsEquipped = true;
+
+	LastItemSeen = nullptr;
 
 
 		FActorSpawnParameters SpawnParams;
@@ -202,6 +199,8 @@ void AMTACharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime); // Call parent class tick function 
 
+	Raycast();
+
 	if (GetNetMode() != NM_DedicatedServer)
 	{
 		OnRep_Health();
@@ -262,27 +261,25 @@ void AMTACharacter::LifeSpanExpired()
 
 void AMTACharacter::Equip() {
 
-	if (!bIsEquipped){
-		bIsEquipped = true;
-		CurrentWeapon->UpdateWeaponPhysics();
-		CurrentWeapon->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
-	}
-	else {
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Already Have A Weapon!"));
+	if (LastItemSeen) {
+		int32 AvailableSlot = Inventory.Find(nullptr);
+		
+		if (AvailableSlot != INDEX_NONE)
+		{
+			//Add the item to the first valid slot we found
+			Inventory[AvailableSlot] = LastItemSeen;
+			//Destroy the item from the game
+				LastItemSeen->Destroy(); 
+				bIsEquipped = true;
+			
+		}else{
+			GLog->Log("Your Inventory is full!");
+		}
 	}
 
 }
 
 void AMTACharacter::UnEquip() {
-
-	if (bIsEquipped) {
-		CurrentWeapon->DetachRootComponentFromParent();
-		bIsEquipped = false;
-		CurrentWeapon->UpdateWeaponPhysics();
-	}
-	else {
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Dont Have A Weapon!"));
-	}
 
 }
 
@@ -294,4 +291,61 @@ void AMTACharacter::StartAiming()
 void AMTACharacter::StopAiming()
 {
 	bAiming = false;
+}
+
+void AMTACharacter::Raycast()
+{
+	//Calculating start and end location
+	FVector StartLocation = FollowCamera->GetComponentLocation();
+	FVector EndLocation = StartLocation + (FollowCamera->GetForwardVector() * RaycastRange);
+
+	FHitResult RaycastHit;
+
+	//Raycast should ignore the character
+	FCollisionQueryParams CQP;
+	CQP.AddIgnoredActor(this);
+
+	//Raycast
+	GetWorld()->LineTraceSingleByChannel(RaycastHit, StartLocation, EndLocation, ECollisionChannel::ECC_WorldDynamic, CQP);
+
+
+	AWeapon* Pickup = Cast<AWeapon>(RaycastHit.GetActor());
+
+	if (LastItemSeen && LastItemSeen != Pickup)
+	{
+		//If our character sees a different pickup then disable the glowing effect on the previous seen item
+		LastItemSeen->SetGlowEffect(false);
+	}
+
+	if (Pickup)
+	{
+		//Enable the glow effect on the current item
+		LastItemSeen = Pickup;
+		Pickup->SetGlowEffect(true);
+	}//Re-Initialize 
+	else LastItemSeen = nullptr;
+
+}
+
+void AMTACharacter::HandleInventoryInput()
+{
+	AMyPlayerController* Con = Cast<AMyPlayerController>(GetController());
+	if (Con) Con->HandleInventoryInput();
+}
+
+void AMTACharacter::SetEquippedItem(UTexture2D * Texture)
+{
+	if (Texture)
+	{
+		for (auto It = Inventory.CreateIterator(); It; It++)
+		{
+			if ((*It) && (*It)->GetPickupTexture() && (*It)->GetPickupTexture()->HasSameSourceArt(Texture))
+			{
+				CurrentlyEquippedItem = *It;
+				GLog->Log("I've set a new equipped item: " + CurrentlyEquippedItem->GetName());
+				break;
+			}
+		}
+	}
+	else GLog->Log("The Player has clicked an empty inventory slot");
 }

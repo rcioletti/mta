@@ -15,7 +15,7 @@ class IInteractionInterface
 	GENERATED_IINTERFACE_BODY()
 
 public:
-	virtual bool CanSoldierInteract(AMTACharacter * Character) const;
+	virtual bool CanCharacterInteract(AMTACharacter * Character) const;
 
 	// Return how long a player has to hold down the interaction button until OnInteract is called
 	virtual float GetInteractionLength() const;

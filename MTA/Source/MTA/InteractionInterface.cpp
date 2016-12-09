@@ -2,7 +2,7 @@
 #include "InteractionInterface.h"
 #include "MTACharacter.h"
 
-bool IInteractionInterface::CanSoldierInteract(AMTACharacter * Character) const
+bool IInteractionInterface::CanCharacterInteract(AMTACharacter * Character) const
 {
 	return true;
 }

@@ -47,6 +47,13 @@ class MTA_API AWeapon : public AActor
 {
 	GENERATED_BODY()
 	
+		virtual void BeginPlay() override;
+
+	UFUNCTION()
+		void OnTriggerEnter(AActor* OverlapedActor, AActor* OtherActor);
+
+	UFUNCTION()
+		void OnTriggerExit(AActor* OverlapedActor, AActor* OtherActor);
 public:
 	// Sets default values for this actor's properties
 	AWeapon();
@@ -64,7 +71,7 @@ public:
 		TEnumAsByte<EWeaponProjectile::ProjectileType> ProjectileType;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Collision)
-	class UBoxComponent* CollisionComp;
+	class USphereComponent* CollisionComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Config)
 	class USkeletalMeshComponent* WeaponMesh;
@@ -96,4 +103,17 @@ public:
 	class UMaterialInterface* BulletHole;
 
 	bool bCanEquip;
+
+	void SetGlowEffect(bool Status);
+
+	FORCEINLINE UTexture2D* GetPickupTexture() { return PickupTexture; }
+
+protected:
+	
+	UPROPERTY(EditAnywhere, Category = "PickupProperties")
+	UTexture2D* PickupTexture;
+
+	UPROPERTY(EditAnywhere, Category = "PickupProperties")
+	FString ItemName;
+
 };

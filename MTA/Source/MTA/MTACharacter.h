@@ -5,6 +5,8 @@
 #include "InteractionInterface.h"
 #include "MTACharacter.generated.h"
 
+#define MAX_INVENTORY_ITEMS 4
+
 UENUM()
 enum class ESoldierTaskEnum : uint8
 {
@@ -36,11 +38,26 @@ class AMTACharacter : public ACharacter
 
 	AWeapon *CurrentWeapon;
 
+	AWeapon* LastItemSeen;
+
 	UFUNCTION()
 	virtual void BeginPlay() override;
 
+	void Raycast();
+
+
+protected:
+
+	UPROPERTY(EditAnywhere)
+	float RaycastRange = 250.f;
+
+	
+
 public:
 	AMTACharacter();
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<AWeapon*> Inventory;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -76,6 +93,9 @@ public:
 
 	UFUNCTION()
 		void OnRep_Health();
+
+	UFUNCTION()
+		void HandleInventoryInput();
 
 protected:
 
@@ -120,6 +140,12 @@ public:
 
 private:
 	virtual void LifeSpanExpired();
+
+private:
+	AWeapon* CurrentlyEquippedItem;
+
+public:
+	void SetEquippedItem(UTexture2D* Texture);
 
 
 };

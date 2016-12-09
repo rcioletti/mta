@@ -6,25 +6,15 @@
 #include "Engine.h"
 
 
-// Sets default values
 AWeapon::AWeapon()
 {
 
-	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComp"));
+	PickupTexture = CreateDefaultSubobject<UTexture2D>(FName("ItemTexture"));
+
+	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComp"));
 	RootComponent = CollisionComp;
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
-	WeaponMesh->bReceivesDecals = false;
-	WeaponMesh->CastShadow = true;
-	WeaponMesh->SetCollisionProfileName(FName(TEXT("PhysicsActor")));
-	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
-	WeaponMesh->bEnablePhysicsOnDedicatedServer = true;
-	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetupAttachment(RootComponent);
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -101,7 +91,7 @@ void AWeapon::ProcessInstantHit(const FHitResult &Impact, const FVector &Origin,
 		UGameplayStatics::SpawnEmitterAttached(SmokeChamber, WeaponMesh, ("MF"));
 	}
 	if (BulletHole != NULL) {
-		UGameplayStatics::SpawnDecalAtLocation(this, BulletHole, FVector(5.f, 5.f, 5.f),Impact.ImpactPoint, AimDir, 20.f);
+		UGameplayStatics::SpawnDecalAtLocation(this, BulletHole, FVector(20.f, 20.f, 20.f),Impact.ImpactPoint, AimDir, 20.f);
 	}
 	if (ImpactParticle != NULL) {
 		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactParticle, Impact.ImpactPoint, GetActorRotation());
@@ -111,14 +101,35 @@ void AWeapon::ProcessInstantHit(const FHitResult &Impact, const FVector &Origin,
 
 void AWeapon::UpdateWeaponPhysics() {
 
-/**	AMTACharacter * OldSoldier = Cast<AMTACharacter>(GetAttachParentActor());
+	/**bCanEquip = OwnerCharacter->bIsEquipped;
 
-	bCanEquip = OldSoldier->bIsEquipped;
-
-	if (bCanEquip) {
+	if (!bCanEquip) {
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}else{
 		WeaponMesh->SetSimulatePhysics(true);
 	}*/
+}
+
+void AWeapon::SetGlowEffect(bool Status)
+{
+	WeaponMesh->SetRenderCustomDepth(Status);
+}
+
+void AWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OnActorBeginOverlap.AddDynamic(this, &AWeapon::OnTriggerEnter);
+	OnActorEndOverlap.AddDynamic(this, &AWeapon::OnTriggerExit);
+}
+
+void AWeapon::OnTriggerEnter(AActor* OverlapedActor, AActor* OtherActor)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("Begin overlap has fired"));
+}
+
+void AWeapon::OnTriggerExit(AActor* OverlapedActor, AActor* OtherActor)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("End overlap has fired"));
 }
