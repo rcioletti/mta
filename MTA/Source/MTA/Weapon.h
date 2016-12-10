@@ -49,12 +49,11 @@ class MTA_API AWeapon : public AActor
 	
 		virtual void BeginPlay() override;
 
-	UFUNCTION()
-		void OnTriggerEnter(AActor* OverlapedActor, AActor* OtherActor);
 
-	UFUNCTION()
-		void OnTriggerExit(AActor* OverlapedActor, AActor* OtherActor);
 public:
+	UFUNCTION()
+	virtual void OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
 	// Sets default values for this actor's properties
 	AWeapon();
 
@@ -103,6 +102,8 @@ public:
 	class UMaterialInterface* BulletHole;
 
 	bool bCanEquip;
+	
+	bool bCanPickup;
 
 	void SetGlowEffect(bool Status);
 
@@ -115,5 +116,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "PickupProperties")
 	FString ItemName;
-
 };

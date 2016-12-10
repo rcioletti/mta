@@ -38,12 +38,8 @@ class AMTACharacter : public ACharacter
 
 	AWeapon *CurrentWeapon;
 
-	AWeapon* LastItemSeen;
-
 	UFUNCTION()
 	virtual void BeginPlay() override;
-
-	void Raycast();
 
 
 protected:
@@ -55,6 +51,8 @@ protected:
 
 public:
 	AMTACharacter();
+
+	AWeapon* LastItemSeen;
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<AWeapon*> Inventory;

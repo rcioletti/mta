@@ -116,7 +116,7 @@ void AMTACharacter::BeginPlay()
 
 	Inventory.SetNum(MAX_INVENTORY_ITEMS);
 
-	bIsEquipped = true;
+	bIsEquipped = false;
 
 	LastItemSeen = nullptr;
 
@@ -127,7 +127,6 @@ void AMTACharacter::BeginPlay()
 		AWeapon *Spawner = GetWorld()->SpawnActor<AWeapon>(WeaponSpawn, SpawnParams);
 
 		if (Spawner) {
-			Spawner->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
 			CurrentWeapon = Spawner;
 		}
 
@@ -199,7 +198,6 @@ void AMTACharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime); // Call parent class tick function 
 
-	Raycast();
 
 	if (GetNetMode() != NM_DedicatedServer)
 	{
@@ -266,12 +264,9 @@ void AMTACharacter::Equip() {
 		
 		if (AvailableSlot != INDEX_NONE)
 		{
-			//Add the item to the first valid slot we found
-			Inventory[AvailableSlot] = LastItemSeen;
-			//Destroy the item from the game
-				LastItemSeen->Destroy(); 
+				Inventory[AvailableSlot] = LastItemSeen;
+				LastItemSeen->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
 				bIsEquipped = true;
-			
 		}else{
 			GLog->Log("Your Inventory is full!");
 		}
@@ -280,7 +275,30 @@ void AMTACharacter::Equip() {
 }
 
 void AMTACharacter::UnEquip() {
+	if (CurrentlyEquippedItem)
+	{
+		int32 IndexOfItem;
+		if (Inventory.Find(CurrentlyEquippedItem, IndexOfItem))
+		{
+			FVector DropLocation = GetActorLocation() + (GetActorForwardVector() * 200);
 
+			FTransform Transform; Transform.SetLocation(DropLocation);
+
+			FActorSpawnParameters SpawnParams;
+
+			AWeapon* PickupToSpawn = GetWorld()->SpawnActor<AWeapon>(CurrentlyEquippedItem->GetClass(), Transform, SpawnParams);
+
+
+			if (PickupToSpawn)
+			{
+				Inventory[IndexOfItem] = nullptr;
+			}
+		}
+	}
+	if (bIsEquipped) {
+		LastItemSeen->DetachRootComponentFromParent();
+		bIsEquipped = false;
+	}
 }
 
 void AMTACharacter::StartAiming()
@@ -293,39 +311,6 @@ void AMTACharacter::StopAiming()
 	bAiming = false;
 }
 
-void AMTACharacter::Raycast()
-{
-	//Calculating start and end location
-	FVector StartLocation = FollowCamera->GetComponentLocation();
-	FVector EndLocation = StartLocation + (FollowCamera->GetForwardVector() * RaycastRange);
-
-	FHitResult RaycastHit;
-
-	//Raycast should ignore the character
-	FCollisionQueryParams CQP;
-	CQP.AddIgnoredActor(this);
-
-	//Raycast
-	GetWorld()->LineTraceSingleByChannel(RaycastHit, StartLocation, EndLocation, ECollisionChannel::ECC_WorldDynamic, CQP);
-
-
-	AWeapon* Pickup = Cast<AWeapon>(RaycastHit.GetActor());
-
-	if (LastItemSeen && LastItemSeen != Pickup)
-	{
-		//If our character sees a different pickup then disable the glowing effect on the previous seen item
-		LastItemSeen->SetGlowEffect(false);
-	}
-
-	if (Pickup)
-	{
-		//Enable the glow effect on the current item
-		LastItemSeen = Pickup;
-		Pickup->SetGlowEffect(true);
-	}//Re-Initialize 
-	else LastItemSeen = nullptr;
-
-}
 
 void AMTACharacter::HandleInventoryInput()
 {

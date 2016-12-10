@@ -17,6 +17,11 @@ AWeapon::AWeapon()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(RootComponent);
 
+	CollisionComp->bGenerateOverlapEvents = true;
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnOverlapBegin);
+
+	WeaponMesh->bGenerateOverlapEvents = false;
+
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
@@ -120,16 +125,16 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OnActorBeginOverlap.AddDynamic(this, &AWeapon::OnTriggerEnter);
-	OnActorEndOverlap.AddDynamic(this, &AWeapon::OnTriggerExit);
 }
 
-void AWeapon::OnTriggerEnter(AActor* OverlapedActor, AActor* OtherActor)
+void AWeapon::OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("Begin overlap has fired"));
-}
+	AMTACharacter* Character = Cast<AMTACharacter>(OtherActor); 
+	
+	Character->LastItemSeen = this;
+	if ((OtherActor == nullptr) || (OtherActor == this) || (OtherComp == nullptr))
+		return;
 
-void AWeapon::OnTriggerExit(AActor* OverlapedActor, AActor* OtherActor)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("End overlap has fired"));
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("Can Be PickepUp"));
+	bCanPickup = true;
 }
