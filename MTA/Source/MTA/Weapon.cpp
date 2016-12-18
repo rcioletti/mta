@@ -6,7 +6,7 @@
 #include "Engine.h"
 
 
-AWeapon::AWeapon()
+AWeapon::AWeapon(const FObjectInitializer& ObjectInitializer)
 {
 
 	PickupTexture = CreateDefaultSubobject<UTexture2D>(FName("ItemTexture"));
@@ -16,11 +16,6 @@ AWeapon::AWeapon()
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(RootComponent);
-
-	CollisionComp->bGenerateOverlapEvents = true;
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnOverlapBegin);
-
-	WeaponMesh->bGenerateOverlapEvents = false;
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
@@ -121,20 +116,4 @@ void AWeapon::SetGlowEffect(bool Status)
 	WeaponMesh->SetRenderCustomDepth(Status);
 }
 
-void AWeapon::BeginPlay()
-{
-	Super::BeginPlay();
 
-}
-
-void AWeapon::OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
-{
-	AMTACharacter* Character = Cast<AMTACharacter>(OtherActor); 
-	
-	Character->LastItemSeen = this;
-	if ((OtherActor == nullptr) || (OtherActor == this) || (OtherComp == nullptr))
-		return;
-
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("Can Be PickepUp"));
-	bCanPickup = true;
-}

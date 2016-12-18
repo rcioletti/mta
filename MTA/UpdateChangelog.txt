@@ -1,0 +1,14 @@
+Post Soviet Kitchen 1.1 Changelog:
+
+
+- Improved materials
+.
+- Optimization: materials now work trough Material Instances
+.
+- Optimization: LODs added
+- Collision added.
+
+- Blueprint-prefabs added for several complex objects.
+- Changed pivot points for movable objects like doors, boxes, windows, etc.
+
+- Many minor bugs have been fixed.

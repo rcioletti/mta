@@ -18,7 +18,7 @@ namespace EWeaponProjectile
 	};
 }
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FWeaponData
 {
 	GENERATED_USTRUCT_BODY()
@@ -37,7 +37,6 @@ struct FWeaponData
 
 	UPROPERTY(EditDefaultsOnly, Category = Config)
 	float WeaponSpread;
-
 	
 };
 
@@ -45,17 +44,11 @@ struct FWeaponData
 UCLASS()
 class MTA_API AWeapon : public AActor
 {
+
 	GENERATED_BODY()
-	
-		virtual void BeginPlay() override;
 
-
-public:
-	UFUNCTION()
-	virtual void OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
-
-	// Sets default values for this actor's properties
-	AWeapon();
+	public:
+	AWeapon(const FObjectInitializer& ObjectInitializer);
 
 	UFUNCTION()
 		void Fire();
@@ -75,6 +68,26 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Config)
 	class USkeletalMeshComponent* WeaponMesh;
 
+	void UpdateWeaponPhysics();
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class USoundBase* FireShoot;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* SmokeChamber;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UParticleSystem* ImpactParticle;
+
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	class UMaterialInterface* BulletHole;
+
+	bool bCanEquip;
+
+	bool bCanPickup;
 
 protected:
 
@@ -83,27 +96,6 @@ protected:
 	void ProcessInstantHit(const FHitResult &Impact, const FVector &Origin, const FVector &ShootDir, int32 RandomSeed, float ReticleSpread);
 
 public:
-
-	void UpdateWeaponPhysics();
-	
-	UPROPERTY(EditDefaultsOnly, Category = Config)
-	class USoundBase* FireShoot;
-	
-	UPROPERTY(EditDefaultsOnly, Category = Config)
-	class UParticleSystem* MuzzleFlash;
-
-	UPROPERTY(EditDefaultsOnly, Category = Config)
-	class UParticleSystem* SmokeChamber;
-	
-	UPROPERTY(EditDefaultsOnly, Category = Config)
-	class UParticleSystem* ImpactParticle;
-
-	UPROPERTY(EditDefaultsOnly, Category = Config)
-	class UMaterialInterface* BulletHole;
-
-	bool bCanEquip;
-	
-	bool bCanPickup;
 
 	void SetGlowEffect(bool Status);
 

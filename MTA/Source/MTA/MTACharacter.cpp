@@ -25,6 +25,26 @@ AMTACharacter::AMTACharacter()
 		WeaponSpawn = (UClass*)WeaponBlueprint.Object->GeneratedClass;
 	}
 
+	bIsEquipped = false;
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshOb_AW2(TEXT("StaticMesh'/Game/Backpack/Mesh/Backpack_03_2.Backpack_03_2'"));
+
+	Backpack = StaticMeshOb_AW2.Object;
+
+	//Create
+	BackpackComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("JoyfulControlYay"));
+
+	//Set Mesh
+	BackpackComponent->SetStaticMesh(Backpack);
+
+	//Deferred Attachment (Ty Nick W.! Actual attach gets done after blueprint stuff)
+	BackpackComponent->SetupAttachment(GetMesh(), "Backpack");
+	BackpackComponent->bHiddenInGame = false;
+
+	GetCapsuleComponent()->bGenerateOverlapEvents = true;
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMTACharacter::OnOverlapBegin);
+
+	GetMesh()->bGenerateOverlapEvents = false;
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -116,19 +136,7 @@ void AMTACharacter::BeginPlay()
 
 	Inventory.SetNum(MAX_INVENTORY_ITEMS);
 
-	bIsEquipped = false;
-
 	LastItemSeen = nullptr;
-
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = Instigator;
-		AWeapon *Spawner = GetWorld()->SpawnActor<AWeapon>(WeaponSpawn, SpawnParams);
-
-		if (Spawner) {
-			CurrentWeapon = Spawner;
-		}
 
 }
 
@@ -238,8 +246,8 @@ void AMTACharacter::OnRep_Health()
 
 void AMTACharacter::FireWeapon() {
 
-	if (bIsEquipped) {
-		CurrentWeapon->Fire();
+	if (bAiming) {
+		LastItemSeen->Fire();
 	}else{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, TEXT("You Cannot Fire Without a Weapon!"));
 	}
@@ -265,10 +273,12 @@ void AMTACharacter::Equip() {
 		if (AvailableSlot != INDEX_NONE)
 		{
 				Inventory[AvailableSlot] = LastItemSeen;
-				LastItemSeen->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
-				bIsEquipped = true;
+				LastItemSeen->Destroy();
+				if (PickupWeaponSound != NULL) {
+					UGameplayStatics::PlaySoundAtLocation(this, PickupWeaponSound, GetActorLocation());
+				}
 		}else{
-			GLog->Log("Your Inventory is full!");
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "Your Inventory is full!");
 		}
 	}
 
@@ -327,10 +337,29 @@ void AMTACharacter::SetEquippedItem(UTexture2D * Texture)
 			if ((*It) && (*It)->GetPickupTexture() && (*It)->GetPickupTexture()->HasSameSourceArt(Texture))
 			{
 				CurrentlyEquippedItem = *It;
-				GLog->Log("I've set a new equipped item: " + CurrentlyEquippedItem->GetName());
+				AWeapon *Spawner = GetWorld()->SpawnActor<AWeapon>(WeaponSpawn);
+				Spawner->AttachRootComponentTo(GetMesh(), "GunSocket", EAttachLocation::SnapToTarget);
+				bIsEquipped = true;
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "I've set a new equipped item: " + CurrentlyEquippedItem->GetName());
+
+				if (EquipWeaponSound != NULL) {
+					UGameplayStatics::PlaySoundAtLocation(this, EquipWeaponSound, GetActorLocation());
+				}
 				break;
 			}
 		}
 	}
-	else GLog->Log("The Player has clicked an empty inventory slot");
+	else GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "The Player has clicked an empty inventory slot");
 }
+
+void AMTACharacter::OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	AWeapon *Spawner = Cast<AWeapon>(OtherActor);
+	if (Spawner)
+	{
+		LastItemSeen = Spawner;
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, "You Can Pickup This item");
+	}
+}
+
+

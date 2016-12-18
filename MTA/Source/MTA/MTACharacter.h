@@ -30,6 +30,18 @@ class AMTACharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	UStaticMeshComponent * BackpackComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	UStaticMesh * Backpack;
+
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	class USoundBase* PickupWeaponSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	class USoundBase* EquipWeaponSound;
+
 	UFUNCTION()
 	void FireWeapon();
 
@@ -41,7 +53,6 @@ class AMTACharacter : public ACharacter
 	UFUNCTION()
 	virtual void BeginPlay() override;
 
-
 protected:
 
 	UPROPERTY(EditAnywhere)
@@ -52,10 +63,8 @@ protected:
 public:
 	AMTACharacter();
 
-	AWeapon* LastItemSeen;
-
-	UPROPERTY(VisibleAnywhere)
-	TArray<AWeapon*> Inventory;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory)
+	TArray<class AWeapon*> Inventory;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -144,6 +153,11 @@ private:
 
 public:
 	void SetEquippedItem(UTexture2D* Texture);
+
+	UFUNCTION()
+	virtual void OnOverlapBegin(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	AWeapon* LastItemSeen;
 
 
 };
